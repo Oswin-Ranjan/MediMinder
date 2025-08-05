@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">MediMinder</string>
+    <string name="medicine_name">Medicine Name</string>
+    <string name="_08_00">08:00</string>
+
+    <string-array name="instruction_options">
+    <item>Before breakfast</item>
+    <item>After breakfast</item>
+    <item>Before lunch</item>
+    <item>After lunch</item>
+    <item>Before dinner</item>
+    <item>After dinner</item>
+    <item>Before sleep</item>
+    <item>After sleep</item>
+    </string-array>
+
+</resources>

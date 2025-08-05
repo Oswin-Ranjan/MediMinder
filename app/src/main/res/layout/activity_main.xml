@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F9F6FF">
+
+    <!-- Header -->
+    <TextView
+        android:id="@+id/header_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="MediMinder"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:paddingTop="36dp"
+        android:paddingBottom="16dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:background="?android:attr/windowBackground"
+        android:fitsSystemWindows="true"
+        android:textColor="#512DA8"
+        android:gravity="center" />
+
+    <!-- RecyclerView for medicine list -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/medicineRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/header_title"
+        android:layout_above="@id/add_medicine_btn"
+        android:padding="16dp"
+        android:clipToPadding="false" />
+
+    <!-- Empty view -->
+    <TextView
+        android:id="@+id/empty_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No medicines added yet.\nTap + to get started!"
+        android:textColor="#9C27B0"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:layout_centerInParent="true"
+        android:visibility="gone" />
+
+    <!-- Floating Add Medicine Button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/add_medicine_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="72dp"
+        android:contentDescription="Add Medicine"
+        app:srcCompat="@android:drawable/ic_input_add"
+        app:backgroundTint="#673AB7" />
+
+</RelativeLayout>
