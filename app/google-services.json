@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "224052298593",
+    "project_id": "mediminder-303d4",
+    "storage_bucket": "mediminder-303d4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:224052298593:android:25d9f6d19619725e823b20",
+        "android_client_info": {
+          "package_name": "com.example.mediminder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiD9-FHYYWvKZBrHuVpGKjTPvx_KcdejY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

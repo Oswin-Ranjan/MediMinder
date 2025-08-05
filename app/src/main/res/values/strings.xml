@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">MediMinder</string>
+    <string name="medicine_name">Medicine Name</string>
+    <string name="_08_00">08:00</string>
+</resources>
