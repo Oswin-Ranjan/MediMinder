@@ -33,7 +33,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String name = prefs.getString("name", "User");
-        Toast.makeText(this, "Welcome, " + name + "!", Toast.LENGTH_LONG).show();
 
         PermissionHelper.requestNotificationPermission(this);
         PermissionHelper.checkAndRequestExactAlarmPermission(this);
@@ -61,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
     }
+
     private void loadMedicines() {
         Executors.newSingleThreadExecutor().execute(() -> {
             List<Medicine> medicines = db.medicineDao().getAll();
@@ -81,12 +81,15 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == PermissionHelper.REQUEST_NOTIFICATION) {
             if (grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Notification permission granted", Toast.LENGTH_SHORT).show();
+                SharedPreferences prefs = getSharedPreferences("UserInfo", MODE_PRIVATE);
+                String name = prefs.getString("name", "User");
+                Toast.makeText(this, "Welcome, " + name + "!", Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show();
             }
         }
     }
+
     private void cancelAlarm(Medicine medicine) {
         Intent intent = new Intent(this, AlarmReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
@@ -97,6 +100,8 @@ public class MainActivity extends AppCompatActivity {
         );
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        alarmManager.cancel(pendingIntent);
+        if (alarmManager != null) {
+            alarmManager.cancel(pendingIntent);
+        }
     }
 }
