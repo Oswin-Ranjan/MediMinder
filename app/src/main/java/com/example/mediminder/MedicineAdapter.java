@@ -1,5 +1,7 @@
 package com.example.mediminder;
 
+import android.app.AlertDialog;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,14 +10,16 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
-import java.util.Locale;
 
 public class MedicineAdapter extends RecyclerView.Adapter<MedicineAdapter.MedicineViewHolder> {
+
     private List<Medicine> medicineList;
-    private final OnDeleteClickListener deleteClickListener;
+    private OnDeleteClickListener deleteClickListener;
+
     public interface OnDeleteClickListener {
         void onDelete(Medicine medicine);
     }
+
     public MedicineAdapter(List<Medicine> list, OnDeleteClickListener listener) {
         this.medicineList = list;
         this.deleteClickListener = listener;
@@ -32,32 +36,37 @@ public class MedicineAdapter extends RecyclerView.Adapter<MedicineAdapter.Medici
     public void onBindViewHolder(@NonNull MedicineViewHolder holder, int position) {
         Medicine medicine = medicineList.get(position);
         holder.name.setText(medicine.name);
-        holder.time.setText(String.format(Locale.getDefault(), "%02d:%02d", medicine.hour, medicine.minute));
+        holder.time.setText(String.format("%02d:%02d", medicine.hour, medicine.minute));
 
-        holder.deleteButton.setOnClickListener(v -> {
-            int adapterPosition = holder.getAdapterPosition();
-            if (adapterPosition != RecyclerView.NO_POSITION) {
-                deleteClickListener.onDelete(medicineList.get(adapterPosition));
-            }
-        });
+        holder.deleteButton.setOnClickListener(v -> showDeleteConfirmationDialog(holder.itemView.getContext(), medicine));
     }
 
     @Override
     public int getItemCount() {
-        return medicineList != null ? medicineList.size() : 0;
+        return medicineList.size();
+    }
+
+    public void updateData(List<Medicine> newList) {
+        medicineList.clear();
+        medicineList.addAll(newList);
+        notifyDataSetChanged();
     }
 
     public void remove(Medicine medicine) {
         int position = medicineList.indexOf(medicine);
-        if (position >= 0 && position < medicineList.size()) {
+        if (position != -1) {
             medicineList.remove(position);
             notifyItemRemoved(position);
         }
     }
 
-    public void updateData(List<Medicine> newList) {
-        this.medicineList = newList;
-        notifyDataSetChanged();
+    private void showDeleteConfirmationDialog(Context context, Medicine medicine) {
+        new AlertDialog.Builder(context)
+                .setTitle("Delete Reminder")
+                .setMessage("Are you sure you want to delete this reminder?")
+                .setPositiveButton("Yes", (dialog, which) -> deleteClickListener.onDelete(medicine))
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     static class MedicineViewHolder extends RecyclerView.ViewHolder {
@@ -71,5 +80,4 @@ public class MedicineAdapter extends RecyclerView.Adapter<MedicineAdapter.Medici
             deleteButton = itemView.findViewById(R.id.deleteButton);
         }
     }
-
 }

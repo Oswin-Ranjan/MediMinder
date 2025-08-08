@@ -4,9 +4,8 @@
     android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F9F6FF">
+    android:background="#E1BEE7">
 
-    <!-- Header -->
     <TextView
         android:id="@+id/header_title"
         android:layout_width="match_parent"
@@ -23,7 +22,6 @@
         android:textColor="#512DA8"
         android:gravity="center" />
 
-    <!-- RecyclerView for medicine list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/medicineRecyclerView"
         android:layout_width="match_parent"
@@ -33,19 +31,17 @@
         android:padding="16dp"
         android:clipToPadding="false" />
 
-    <!-- Empty view -->
     <TextView
         android:id="@+id/empty_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
         android:text="No medicines added yet.\nTap + to get started!"
         android:textColor="#9C27B0"
         android:textSize="16sp"
-        android:gravity="center"
-        android:layout_centerInParent="true"
-        android:visibility="gone" />
+        android:visibility="visible" />
 
-    <!-- Floating Add Medicine Button -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/add_medicine_btn"
         android:layout_width="wrap_content"

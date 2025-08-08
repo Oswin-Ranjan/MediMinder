@@ -5,7 +5,9 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -18,6 +20,8 @@ public class MainActivity extends AppCompatActivity {
     public MedicineDatabase db;
     public RecyclerView recyclerView;
     public MedicineAdapter adapter;
+    private TextView selectedDaysTextView;
+    private boolean[] selectedDays = new boolean[7];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
                 });
             });
         });
-
         recyclerView.setAdapter(adapter);
 
         FloatingActionButton addButton = findViewById(R.id.add_medicine_btn);
@@ -60,12 +63,25 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
     }
-
     private void loadMedicines() {
         Executors.newSingleThreadExecutor().execute(() -> {
             List<Medicine> medicines = db.medicineDao().getAll();
             runOnUiThread(() -> adapter.updateData(medicines));
         });
+    }
+
+    private void cancelAlarm(Medicine medicine) {
+        Intent intent = new Intent(this, AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                this,
+                medicine.alarmId,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        if (alarmManager != null) {
+            alarmManager.cancel(pendingIntent);
+        }
     }
 
     @Override
@@ -90,18 +106,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void cancelAlarm(Medicine medicine) {
-        Intent intent = new Intent(this, AlarmReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                this,
-                medicine.alarmId,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
+    private void showRepeatDaysDialog() {
+        String[] days = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        if (alarmManager != null) {
-            alarmManager.cancel(pendingIntent);
-        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Repeat on selected days")
+                .setMultiChoiceItems(days, selectedDays, (dialog, which, isChecked) -> {
+                    selectedDays[which] = isChecked;
+                })
+                .setPositiveButton("OK", (dialog, which) -> {
+                    StringBuilder selected = new StringBuilder();
+                    for (int i = 0; i < selectedDays.length; i++) {
+                        if (selectedDays[i]) {
+                            selected.append(days[i]).append(", ");
+                        }
+                    }
+                    if (selected.length() > 0) {
+                        selected.deleteCharAt(selected.length() - 2); // remove trailing comma
+                    } else {
+                        selected.append("None");
+                    }
+                    selectedDaysTextView.setText("Repeats on: " + selected.toString().trim());
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 }

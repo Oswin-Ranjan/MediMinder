@@ -1,41 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
-    android:padding="24dp"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="24dp">
 
-    <EditText
-        android:id="@+id/medicineName"
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:hint="Medicine Name"
-        tools:ignore="TextFields" />
+        android:layout_height="wrap_content">
 
-    <EditText
-        android:id="@+id/editTextDosage"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:hint="Enter dosage (e.g., 1 pill)"
-        android:inputType="text" />
+        <EditText
+            android:id="@+id/medicineName"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="Medicine Name"
+            android:inputType="textCapWords"
+            tools:ignore="TextFields" />
 
-    <Spinner
-        android:id="@+id/instruction_spinner"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:entries="@array/instruction_options" />
+        <EditText
+            android:id="@+id/editTextDosage"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="Enter dosage (e.g., 1 pill)"
+            android:inputType="text" />
 
-    <TimePicker
-        android:id="@+id/timePicker"
-        android:layout_marginTop="16dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        <EditText
+            android:id="@+id/dateEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="false"
+            android:hint="Select Date"
+            android:drawableRight="@android:drawable/ic_menu_my_calendar" />
 
-    <Button
-        android:id="@+id/saveButton"
-        android:layout_marginTop="24dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Save Reminder" />
-</LinearLayout>
+        <EditText
+            android:id="@+id/timeEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="false"
+            android:hint="Select Time"
+            android:drawableRight="@android:drawable/ic_menu_recent_history" />
+
+        <Spinner
+            android:id="@+id/instruction_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:entries="@array/instruction_options" />
+
+        <Spinner
+            android:id="@+id/repeatSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:entries="@array/repeat_options" />
+
+        <Button
+            android:id="@+id/selectDaysButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Days"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:id="@+id/selectedDaysTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Repeats on: None"
+            android:textStyle="normal"
+            android:textColor="@android:color/holo_red_dark"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp" />
+
+        <Button
+            android:id="@+id/saveButton"
+            android:layout_marginTop="24dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save Reminder"
+            android:backgroundTint="@color/purple_800"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+</ScrollView>

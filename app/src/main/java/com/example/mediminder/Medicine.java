@@ -15,6 +15,7 @@ import androidx.room.PrimaryKey;
     public int alarmId;
     public String dosage;
     public String instruction;
+    public String repeatDays;
 
     public Medicine(String name, String dosage, String instruction, int hour, int minute)
     {
@@ -40,27 +41,29 @@ import androidx.room.PrimaryKey;
     public void setName(String name) {
         this.name = name;
     }
-
     public String getDosage() {
         return dosage;
     }
-
     public void setDosage(String dosage) {
         this.dosage = dosage;
     }
-
     public int getHour() {
         return hour;
     }
     public int getMinute() {
         return minute;
     }
-
     public String getInstruction() {
         return instruction;
     }
     public void setInstruction(String instruction) {
         this.instruction = instruction;
+    }
+    public String getRepeatDays() {
+        return repeatDays;
+    }
+    public void setRepeatDays(String repeatDays) {
+        this.repeatDays = repeatDays;
     }
 
 }

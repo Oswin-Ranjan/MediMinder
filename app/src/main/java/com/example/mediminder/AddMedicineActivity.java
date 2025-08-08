@@ -3,29 +3,42 @@ package com.example.mediminder;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
+import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.app.PendingIntent;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.TimePicker;
+import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.concurrent.Executors;
 
 public class AddMedicineActivity extends AppCompatActivity {
-    private EditText nameInput;
-    private EditText dosageInput;
-    private TimePicker timePicker;
+
+    private EditText nameInput, dosageInput, dateEditText, timeEditText;
+    private Spinner instructionSpinner;
+    private Spinner repeatSpinner;
+    private Button saveButton, selectDaysButton;
+    private TextView selectedDaysTextView;
+
+    private String selectedRepeatDays = "";
     private MedicineDatabase db;
     private static final int PERMISSION_REQUEST_CODE = 101;
+    private final Calendar calendar = Calendar.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,48 +47,109 @@ public class AddMedicineActivity extends AppCompatActivity {
 
         nameInput = findViewById(R.id.medicineName);
         dosageInput = findViewById(R.id.editTextDosage);
-        timePicker = findViewById(R.id.timePicker);
-        Spinner spinner = findViewById(R.id.instruction_spinner);
-        Button saveButton = findViewById(R.id.saveButton);
+        dateEditText = findViewById(R.id.dateEditText);
+        timeEditText = findViewById(R.id.timeEditText);
+        repeatSpinner = findViewById(R.id.repeatSpinner);
+        instructionSpinner = findViewById(R.id.instruction_spinner);
+        saveButton = findViewById(R.id.saveButton);
+        selectDaysButton = findViewById(R.id.selectDaysButton);
+        selectedDaysTextView = findViewById(R.id.selectedDaysTextView);
 
         db = MedicineDatabase.getInstance(this);
 
+        dateEditText.setOnClickListener(v -> showDatePicker());
+        timeEditText.setOnClickListener(v -> showTimePicker());
+
+        selectDaysButton.setOnClickListener(v -> showRepeatDaysDialog());
+
         saveButton.setOnClickListener(v -> {
-            if (!checkAndRequestPermissions()) {
-                return;
-            }
+            if (!checkAndRequestPermissions()) return;
 
             String name = nameInput.getText().toString();
             String dosage = dosageInput.getText().toString();
-            int hour = timePicker.getHour();
-            int minute = timePicker.getMinute();
-            String instruction = spinner.getSelectedItem().toString();
+            String instruction = instructionSpinner.getSelectedItem().toString();
+            String repeatOption = repeatSpinner.getSelectedItem().toString();
 
-            // Compute reminder time
-            Calendar calendar = Calendar.getInstance();
-            calendar.set(Calendar.HOUR_OF_DAY, hour);
-            calendar.set(Calendar.MINUTE, minute);
-            calendar.set(Calendar.SECOND, 0);
+            long intervalMillis = 0;
 
-            long triggerMillis = calendar.getTimeInMillis();
-            if (triggerMillis < System.currentTimeMillis()) {
-                triggerMillis += AlarmManager.INTERVAL_DAY;
+            switch (repeatOption) {
+                case "Every day":
+                    intervalMillis = AlarmManager.INTERVAL_DAY;
+                    break;
+                case "Every week":
+                    intervalMillis = AlarmManager.INTERVAL_DAY * 7;
+                    break;
+                case "Every 2 weeks":
+                    intervalMillis = AlarmManager.INTERVAL_DAY * 14;
+                    break;
+                case "Every 3 weeks":
+                    intervalMillis = AlarmManager.INTERVAL_DAY * 21;
+                    break;
+                case "Every month":
+                    intervalMillis = AlarmManager.INTERVAL_DAY * 30;
+                    break;
+                case "Do not repeat":
+                default:
+                    intervalMillis = 0;
+                    break;
             }
 
-            Medicine medicine = new Medicine(name, dosage, instruction, hour, minute);
+            long triggerMillis = calendar.getTimeInMillis();
 
-            long finalTriggerMillis = triggerMillis;
+            Medicine medicine = new Medicine(name, dosage, instruction,
+                    calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
+
+            // Save selected repeat days
+            medicine.setRepeatDays(selectedRepeatDays);
+
+            long finalIntervalMillis = intervalMillis;
             Executors.newSingleThreadExecutor().execute(() -> {
                 db.medicineDao().insert(medicine);
-
                 runOnUiThread(() -> {
-                    scheduleReminder(this, name, dosage, instruction,  finalTriggerMillis);
+                    scheduleReminder(this, name, dosage, instruction, triggerMillis, finalIntervalMillis);
                     Toast.makeText(this, "Medicine saved and reminder set", Toast.LENGTH_SHORT).show();
                     finish();
                 });
             });
         });
     }
+
+    private void showDatePicker() {
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(
+                this,
+                (view, selectedYear, selectedMonth, selectedDay) -> {
+                    calendar.set(Calendar.YEAR, selectedYear);
+                    calendar.set(Calendar.MONTH, selectedMonth);
+                    calendar.set(Calendar.DAY_OF_MONTH, selectedDay);
+                    dateEditText.setText(selectedDay + "/" + (selectedMonth + 1) + "/" + selectedYear);
+                },
+                year, month, day
+        );
+        datePickerDialog.show();
+    }
+
+    private void showTimePicker() {
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
+        TimePickerDialog timePickerDialog = new TimePickerDialog(
+                this,
+                (view, selectedHour, selectedMinute) -> {
+                    calendar.set(Calendar.HOUR_OF_DAY, selectedHour);
+                    calendar.set(Calendar.MINUTE, selectedMinute);
+                    calendar.set(Calendar.SECOND, 0);
+                    calendar.set(Calendar.MILLISECOND, 0);
+                    timeEditText.setText(String.format("%02d:%02d", selectedHour, selectedMinute));
+                },
+                hour, minute, true
+        );
+        timePickerDialog.show();
+    }
+
     private boolean checkAndRequestPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -98,7 +172,7 @@ public class AddMedicineActivity extends AppCompatActivity {
     }
 
     @SuppressLint("ScheduleExactAlarm")
-    private void scheduleReminder(Context context, String medicineName, String dosage, String instruction, long triggerTimeMillis) {
+    private void scheduleReminder(Context context, String medicineName, String dosage, String instruction, long triggerTimeMillis, long intervalMillis) {
         Intent intent = new Intent(context, AlarmReceiver.class);
         intent.putExtra("medicineName", medicineName);
         intent.putExtra("dosage", dosage);
@@ -106,18 +180,52 @@ public class AddMedicineActivity extends AppCompatActivity {
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
-                (int) System.currentTimeMillis(),  // unique request code
+                (int) System.currentTimeMillis(),
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager != null) {
-            alarmManager.setExact(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerTimeMillis,
-                    pendingIntent
-            );
+            if (intervalMillis > 0) {
+                alarmManager.setRepeating(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerTimeMillis,
+                        intervalMillis,
+                        pendingIntent
+                );
+            } else {
+                alarmManager.setExact(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerTimeMillis,
+                        pendingIntent
+                );
+            }
         }
     }
+
+    private void showRepeatDaysDialog() {
+        String[] days = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+        boolean[] selectedDays = new boolean[7];
+        ArrayList<String> repeatDayList = new ArrayList<>();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Repeat on days");
+
+        builder.setMultiChoiceItems(days, selectedDays, (dialog, which, isChecked) -> {
+            if (isChecked) {
+                repeatDayList.add(days[which]);
+            } else {
+                repeatDayList.remove(days[which]);
+            }
+        });
+
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            selectedRepeatDays = TextUtils.join(",", repeatDayList);
+            selectedDaysTextView.setText("Repeats on: " + selectedRepeatDays);
+        });
+
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+}
 }
