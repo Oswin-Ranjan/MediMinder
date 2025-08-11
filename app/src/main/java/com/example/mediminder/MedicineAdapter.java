@@ -1,6 +1,5 @@
 package com.example.mediminder;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,74 +9,100 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
+import java.util.concurrent.Executors;
 
-public class MedicineAdapter extends RecyclerView.Adapter<MedicineAdapter.MedicineViewHolder> {
+public class MedicineAdapter extends RecyclerView.Adapter<MedicineAdapter.VH> {
 
-    private List<Medicine> medicineList;
-    private OnDeleteClickListener deleteClickListener;
+    private final Context context;
+    private final List<Medicine> list;
+    private final MedicineDatabase db;
 
-    public interface OnDeleteClickListener {
-        void onDelete(Medicine medicine);
-    }
-
-    public MedicineAdapter(List<Medicine> list, OnDeleteClickListener listener) {
-        this.medicineList = list;
-        this.deleteClickListener = listener;
+    public MedicineAdapter(Context context, List<Medicine> list) {
+        this.context = context;
+        this.list = list;
+        this.db = MedicineDatabase.getInstance(context);
     }
 
     @NonNull
     @Override
-    public MedicineViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_medicine, parent, false);
-        return new MedicineViewHolder(view);
+    public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(context).inflate(R.layout.item_medicine, parent, false);
+        return new VH(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull MedicineViewHolder holder, int position) {
-        Medicine medicine = medicineList.get(position);
-        holder.name.setText(medicine.name);
-        holder.time.setText(String.format("%02d:%02d", medicine.hour, medicine.minute));
+    public void onBindViewHolder(@NonNull VH holder, int position) {
+        Medicine m = list.get(position);
+        holder.tvName.setText(m.getName());
+        holder.tvTime.setText(String.format("%02d:%02d", m.getHour(), m.getMinute()));
 
-        holder.deleteButton.setOnClickListener(v -> showDeleteConfirmationDialog(holder.itemView.getContext(), medicine));
+        holder.btnTaken.setEnabled(m.isPending());
+        holder.btnMissed.setEnabled(m.isPending());
+
+        holder.btnTaken.setOnClickListener(v -> {
+            MissedDoseHandler.markAsTaken(context, m);
+            notifyItemChanged(holder.getAdapterPosition());
+        });
+
+        holder.btnMissed.setOnClickListener(v -> {
+            MissedDoseHandler.markAsMissed(context, m);
+            notifyItemChanged(holder.getAdapterPosition());
+        });
+
+        holder.btnDelete.setOnClickListener(v -> {
+            int pos = holder.getAdapterPosition();
+            if (pos != RecyclerView.NO_POSITION && pos < list.size()) {
+                Medicine medicineToDelete = list.get(pos);
+
+                // Run DB delete in background thread
+                Executors.newSingleThreadExecutor().execute(() -> {
+                    db.medicineDao().delete(medicineToDelete);
+
+                    // Update RecyclerView on UI thread
+                    ((MainActivity) context).runOnUiThread(() -> {
+                        list.remove(pos);
+                        notifyItemRemoved(pos);
+                        notifyItemRangeChanged(pos, list.size());
+                    });
+                });
+            }
+        });
+
+        // Status display
+        if (m.isTaken()) {
+            holder.tvStatus.setText("Taken");
+            holder.tvStatus.setVisibility(View.VISIBLE);
+        } else if (m.isMissed()) {
+            holder.tvStatus.setText("Missed");
+            holder.tvStatus.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvStatus.setVisibility(View.GONE);
+        }
     }
 
     @Override
     public int getItemCount() {
-        return medicineList.size();
+        return list.size();
     }
 
-    public void updateData(List<Medicine> newList) {
-        medicineList.clear();
-        medicineList.addAll(newList);
-        notifyDataSetChanged();
-    }
+    static class VH extends RecyclerView.ViewHolder {
+        TextView tvName, tvTime, tvStatus;
+        Button btnTaken, btnMissed, btnDelete;
 
-    public void remove(Medicine medicine) {
-        int position = medicineList.indexOf(medicine);
-        if (position != -1) {
-            medicineList.remove(position);
-            notifyItemRemoved(position);
-        }
-    }
-
-    private void showDeleteConfirmationDialog(Context context, Medicine medicine) {
-        new AlertDialog.Builder(context)
-                .setTitle("Delete Reminder")
-                .setMessage("Are you sure you want to delete this reminder?")
-                .setPositiveButton("Yes", (dialog, which) -> deleteClickListener.onDelete(medicine))
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
-    static class MedicineViewHolder extends RecyclerView.ViewHolder {
-        TextView name, time;
-        Button deleteButton;
-
-        MedicineViewHolder(@NonNull View itemView) {
+        public VH(@NonNull View itemView) {
             super(itemView);
-            name = itemView.findViewById(R.id.medicineName);
-            time = itemView.findViewById(R.id.medicineTime);
-            deleteButton = itemView.findViewById(R.id.deleteButton);
+            tvName = itemView.findViewById(R.id.tvMedicineName);
+            tvTime = itemView.findViewById(R.id.tvMedicineTime);
+            tvStatus = itemView.findViewById(R.id.tvStatus);
+            btnTaken = itemView.findViewById(R.id.btnTaken);
+            btnMissed = itemView.findViewById(R.id.btnMissed);
+            btnDelete = itemView.findViewById(R.id.btnDelete);
         }
+    }
+
+    public void updateList(List<Medicine> newList) {
+        this.list.clear();
+        this.list.addAll(newList);
+        notifyDataSetChanged();
     }
 }

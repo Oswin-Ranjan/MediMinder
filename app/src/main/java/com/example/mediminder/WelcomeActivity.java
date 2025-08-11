@@ -16,12 +16,10 @@ public class WelcomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Check if user info is already saved
         SharedPreferences prefs = getSharedPreferences("UserInfo", MODE_PRIVATE);
         boolean isUserInfoSaved = prefs.getBoolean("user_info_saved", false);
 
         if (isUserInfoSaved) {
-            // Skip welcome screen and go directly to MainActivity
             startActivity(new Intent(WelcomeActivity.this, MainActivity.class));
             finish();
             return;

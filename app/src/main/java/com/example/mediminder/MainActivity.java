@@ -1,60 +1,52 @@
 package com.example.mediminder;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.widget.TextView;
+import android.widget.Button;
 import android.widget.Toast;
-import android.app.AlertDialog;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
-    public MedicineDatabase db;
-    public RecyclerView recyclerView;
-    public MedicineAdapter adapter;
-    private TextView selectedDaysTextView;
-    private boolean[] selectedDays = new boolean[7];
+
+    private MedicineDatabase db;
+    private RecyclerView recyclerView;
+    private MedicineAdapter adapter;
+    private List<Medicine> allMeds = new ArrayList<>();
+
+    private Button btnAll, btnPending, btnTaken, btnMissed;
+    private String currentFilter = "ALL";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SharedPreferences prefs = getSharedPreferences("UserInfo", MODE_PRIVATE);
-        boolean userInfoSaved = prefs.getBoolean("user_info_saved", false);
-        if (!userInfoSaved) {
-            startActivity(new Intent(MainActivity.this, WelcomeActivity.class));
-            finish();
-            return;
-        }
-
-        String name = prefs.getString("name", "User");
-
         PermissionHelper.requestNotificationPermission(this);
         PermissionHelper.checkAndRequestExactAlarmPermission(this);
 
         db = MedicineDatabase.getInstance(this);
+
         recyclerView = findViewById(R.id.medicineRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new MedicineAdapter(new java.util.ArrayList<>(), medicine -> {
-            Executors.newSingleThreadExecutor().execute(() -> {
-                db.medicineDao().delete(medicine);
-                cancelAlarm(medicine);
-                runOnUiThread(() -> {
-                    adapter.remove(medicine);
-                    Toast.makeText(MainActivity.this, "Reminder deleted", Toast.LENGTH_SHORT).show();
-                });
-            });
-        });
+
+        adapter = new MedicineAdapter(this, new ArrayList<>());
         recyclerView.setAdapter(adapter);
+
+        btnAll = findViewById(R.id.btnAll);
+        btnPending = findViewById(R.id.btnPending);
+        btnTaken = findViewById(R.id.btnTaken);
+        btnMissed = findViewById(R.id.btnMissed);
 
         FloatingActionButton addButton = findViewById(R.id.add_medicine_btn);
         addButton.setOnClickListener(v -> {
@@ -62,26 +54,62 @@ public class MainActivity extends AppCompatActivity {
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
         });
+
+
+        // Set button listeners
+        btnAll.setOnClickListener(v -> {
+            currentFilter = "ALL";
+            filterMedicines();
+            Toast.makeText(this, "Showing all medicines", Toast.LENGTH_SHORT).show();
+        });
+
+        btnPending.setOnClickListener(v -> {
+            currentFilter = "PENDING";
+            filterMedicines();
+        });
+
+        btnTaken.setOnClickListener(v -> {
+            currentFilter = "TAKEN";
+            filterMedicines();
+        });
+
+        btnMissed.setOnClickListener(v -> {
+            currentFilter = "MISSED";
+            filterMedicines();
+        });
+
+        loadMedicines();
     }
+
     private void loadMedicines() {
         Executors.newSingleThreadExecutor().execute(() -> {
-            List<Medicine> medicines = db.medicineDao().getAll();
-            runOnUiThread(() -> adapter.updateData(medicines));
+            List<Medicine> meds = db.medicineDao().getAll();
+            runOnUiThread(() -> {
+                allMeds.clear();
+                allMeds.addAll(meds);
+                filterMedicines();
+            });
         });
     }
 
-    private void cancelAlarm(Medicine medicine) {
-        Intent intent = new Intent(this, AlarmReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                this,
-                medicine.alarmId,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        if (alarmManager != null) {
-            alarmManager.cancel(pendingIntent);
+    private void filterMedicines() {
+        List<Medicine> filtered = new ArrayList<>();
+
+        switch (currentFilter) {
+            case "PENDING":
+                for (Medicine m : allMeds) if (m.isPending()) filtered.add(m);
+                break;
+            case "TAKEN":
+                for (Medicine m : allMeds) if (m.isTaken()) filtered.add(m);
+                break;
+            case "MISSED":
+                for (Medicine m : allMeds) if (m.isMissed()) filtered.add(m);
+                break;
+            default:
+                filtered.addAll(allMeds);
         }
+
+        adapter.updateList(filtered);
     }
 
     @Override
@@ -104,31 +132,5 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show();
             }
         }
-    }
-
-    private void showRepeatDaysDialog() {
-        String[] days = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Repeat on selected days")
-                .setMultiChoiceItems(days, selectedDays, (dialog, which, isChecked) -> {
-                    selectedDays[which] = isChecked;
-                })
-                .setPositiveButton("OK", (dialog, which) -> {
-                    StringBuilder selected = new StringBuilder();
-                    for (int i = 0; i < selectedDays.length; i++) {
-                        if (selectedDays[i]) {
-                            selected.append(days[i]).append(", ");
-                        }
-                    }
-                    if (selected.length() > 0) {
-                        selected.deleteCharAt(selected.length() - 2); // remove trailing comma
-                    } else {
-                        selected.append("None");
-                    }
-                    selectedDaysTextView.setText("Repeats on: " + selected.toString().trim());
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
     }
 }

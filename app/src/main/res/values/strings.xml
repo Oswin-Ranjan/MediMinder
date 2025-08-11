@@ -2,6 +2,13 @@
     <string name="app_name">MediMinder</string>
     <string name="medicine_name">Medicine Name</string>
     <string name="_08_00">08:00</string>
+    <string name="taken">Taken</string>
+    <string name="missed">Missed</string>
+    <string name="pending">Pending</string>
+    <string name="no_medicines_added_yet_ntap_to_get_started">No medicines added yet.\nTap + to get started!</string>
+    <string name="add_medicine">Add Medicine</string>
+    <string name="all">All</string>
+    <string name="medicine_marked_as_missed">Medicine marked as missed</string>
 
     <string-array name="instruction_options">
     <item>Before breakfast</item>

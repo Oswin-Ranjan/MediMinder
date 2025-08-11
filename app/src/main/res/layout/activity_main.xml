@@ -6,30 +6,67 @@
     android:layout_height="match_parent"
     android:background="#E1BEE7">
 
-    <TextView
-        android:id="@+id/header_title"
+    <LinearLayout
+        android:id="@+id/filterButtonsLayout"
+        style="?android:attr/buttonBarStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="MediMinder"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:paddingTop="36dp"
-        android:paddingBottom="16dp"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:background="?android:attr/windowBackground"
-        android:fitsSystemWindows="true"
-        android:textColor="#512DA8"
-        android:gravity="center" />
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="8dp">
+
+        <Button
+            android:id="@+id/btnAll"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/all"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/btnTaken"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/taken"
+            android:backgroundTint="@color/green_600"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/btnMissed"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/missed"
+            android:backgroundTint="@color/red_700"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/btnPending"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/pending"
+            android:backgroundTint="@color/blue_700"
+            android:textColor="@android:color/white" />
+
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/medicineRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/header_title"
+        android:layout_height="686dp"
         android:layout_above="@id/add_medicine_btn"
-        android:padding="16dp"
-        android:clipToPadding="false" />
+        android:layout_below="@id/empty_view"
+        android:layout_marginTop="-390dp"
+        android:layout_marginBottom="1dp"
+        android:clipToPadding="false"
+        android:padding="16dp" />
 
     <TextView
         android:id="@+id/empty_view"
@@ -37,7 +74,7 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:gravity="center"
-        android:text="No medicines added yet.\nTap + to get started!"
+        android:text="@string/no_medicines_added_yet_ntap_to_get_started"
         android:textColor="#9C27B0"
         android:textSize="16sp"
         android:visibility="visible" />
@@ -50,7 +87,7 @@
         android:layout_alignParentEnd="true"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="72dp"
-        android:contentDescription="Add Medicine"
+        android:contentDescription="@string/add_medicine"
         app:srcCompat="@android:drawable/ic_input_add"
         app:backgroundTint="#673AB7" />
 

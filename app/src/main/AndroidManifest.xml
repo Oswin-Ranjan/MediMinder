@@ -41,5 +41,11 @@
         <receiver android:name=".AlarmReceiver"
             android:exported="false"/>
 
+        <!-- Broadcast receiver for taken action notifications -->
+        <receiver android:name=".TakenReceiver" />
+
+        <!-- Broadcast receiver for missed dose notifications -->
+        <receiver android:name=".MissedDoseCheckReceiver"/>
+
     </application>
 </manifest>

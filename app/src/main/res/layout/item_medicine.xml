@@ -1,37 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_margin="8dp"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    android:elevation="4dp">
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
 
-    <RelativeLayout
+    <LinearLayout
+        android:padding="12dp"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="12dp">
+        android:layout_height="wrap_content">
 
+        <!-- Medicine Name -->
         <TextView
-            android:id="@+id/medicineName"
-            android:layout_width="wrap_content"
+            android:id="@+id/tvMedicineName"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Medicine Name"
+            android:text="Medicine name"
             android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"/>
 
+        <!-- Medicine Time -->
         <TextView
-            android:id="@+id/medicineTime"
+            android:id="@+id/tvMedicineTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/medicineName"
-            android:text="Time"
-            android:textSize="16sp" />
+            android:text="08:00"
+            android:layout_marginTop="4dp"/>
 
-        <Button
-            android:id="@+id/deleteButton"
+        <!-- Status Text -->
+        <TextView
+            android:id="@+id/tvStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Delete"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true" />
-    </RelativeLayout>
+            android:text="Status"
+            android:textColor="@android:color/holo_blue_dark"
+            android:layout_marginTop="6dp"
+            android:visibility="visible"/>
+
+        <!-- Buttons Row -->
+        <LinearLayout
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <!-- Missed Button -->
+            <Button
+                android:id="@+id/btnMissed"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Missed"
+                android:backgroundTint="@android:color/holo_red_light"
+                android:textColor="@android:color/white"/>
+
+            <View android:layout_width="8dp" android:layout_height="0dp" />
+
+            <!-- Taken Button -->
+            <Button
+                android:id="@+id/btnTaken"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Taken"
+                android:backgroundTint="@android:color/holo_green_dark"
+                android:textColor="@android:color/white"/>
+
+            <View android:layout_width="8dp" android:layout_height="0dp" />
+
+            <!-- Delete Button -->
+            <Button
+                android:id="@+id/btnDelete"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Delete"
+                android:backgroundTint="@android:color/holo_orange_dark"
+                android:textColor="@android:color/white"/>
+        </LinearLayout>
+    </LinearLayout>
 </androidx.cardview.widget.CardView>

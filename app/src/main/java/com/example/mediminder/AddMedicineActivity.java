@@ -1,6 +1,5 @@
 package com.example.mediminder;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
@@ -9,7 +8,6 @@ import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -18,11 +16,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.concurrent.Executors;
@@ -37,7 +31,6 @@ public class AddMedicineActivity extends AppCompatActivity {
 
     private String selectedRepeatDays = "";
     private MedicineDatabase db;
-    private static final int PERMISSION_REQUEST_CODE = 101;
     private final Calendar calendar = Calendar.getInstance();
 
     @Override
@@ -57,59 +50,81 @@ public class AddMedicineActivity extends AppCompatActivity {
 
         db = MedicineDatabase.getInstance(this);
 
+        // Request permissions right when activity starts
+        PermissionHelper.requestNotificationPermission(this);
+        PermissionHelper.checkAndRequestExactAlarmPermission(this);
+
         dateEditText.setOnClickListener(v -> showDatePicker());
         timeEditText.setOnClickListener(v -> showTimePicker());
-
         selectDaysButton.setOnClickListener(v -> showRepeatDaysDialog());
 
         saveButton.setOnClickListener(v -> {
-            if (!checkAndRequestPermissions()) return;
-
-            String name = nameInput.getText().toString();
-            String dosage = dosageInput.getText().toString();
-            String instruction = instructionSpinner.getSelectedItem().toString();
-            String repeatOption = repeatSpinner.getSelectedItem().toString();
-
-            long intervalMillis = 0;
-
-            switch (repeatOption) {
-                case "Every day":
-                    intervalMillis = AlarmManager.INTERVAL_DAY;
-                    break;
-                case "Every week":
-                    intervalMillis = AlarmManager.INTERVAL_DAY * 7;
-                    break;
-                case "Every 2 weeks":
-                    intervalMillis = AlarmManager.INTERVAL_DAY * 14;
-                    break;
-                case "Every 3 weeks":
-                    intervalMillis = AlarmManager.INTERVAL_DAY * 21;
-                    break;
-                case "Every month":
-                    intervalMillis = AlarmManager.INTERVAL_DAY * 30;
-                    break;
-                case "Do not repeat":
-                default:
-                    intervalMillis = 0;
-                    break;
+            if (!PermissionHelper.hasNotificationPermission(this)) {
+                Toast.makeText(this, "Please allow notification permission to save reminder", Toast.LENGTH_LONG).show();
+                PermissionHelper.requestNotificationPermission(this);
+                return;
             }
 
-            long triggerMillis = calendar.getTimeInMillis();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                if (!alarmManager.canScheduleExactAlarms()) {
+                    Toast.makeText(this, "Please allow exact alarms in settings", Toast.LENGTH_LONG).show();
+                    PermissionHelper.checkAndRequestExactAlarmPermission(this);
+                    return;
+                }
+            }
 
-            Medicine medicine = new Medicine(name, dosage, instruction,
-                    calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
+            saveMedicineAndScheduleReminder();
+        });
+    }
 
-            // Save selected repeat days
-            medicine.setRepeatDays(selectedRepeatDays);
+    private void saveMedicineAndScheduleReminder() {
+        String name = nameInput.getText().toString().trim();
+        String dosage = dosageInput.getText().toString().trim();
+        String instruction = instructionSpinner.getSelectedItem().toString();
+        String repeatOption = repeatSpinner.getSelectedItem().toString();
 
-            long finalIntervalMillis = intervalMillis;
-            Executors.newSingleThreadExecutor().execute(() -> {
-                db.medicineDao().insert(medicine);
-                runOnUiThread(() -> {
-                    scheduleReminder(this, name, dosage, instruction, triggerMillis, finalIntervalMillis);
-                    Toast.makeText(this, "Medicine saved and reminder set", Toast.LENGTH_SHORT).show();
-                    finish();
-                });
+        if (name.isEmpty() || dosage.isEmpty() || dateEditText.getText().toString().isEmpty() || timeEditText.getText().toString().isEmpty()) {
+            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        long intervalMillis;
+        switch (repeatOption) {
+            case "Every day":
+                intervalMillis = AlarmManager.INTERVAL_DAY;
+                break;
+            case "Every week":
+                intervalMillis = AlarmManager.INTERVAL_DAY * 7;
+                break;
+            case "Every 2 weeks":
+                intervalMillis = AlarmManager.INTERVAL_DAY * 14;
+                break;
+            case "Every 3 weeks":
+                intervalMillis = AlarmManager.INTERVAL_DAY * 21;
+                break;
+            case "Every month":
+                intervalMillis = AlarmManager.INTERVAL_DAY * 30;
+                break;
+            case "Do not repeat":
+            default:
+                intervalMillis = 0;
+                break;
+        }
+
+        long triggerMillis = calendar.getTimeInMillis();
+
+        Medicine medicine = new Medicine(name, dosage, instruction,
+                calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
+        medicine.setRepeatDays(selectedRepeatDays);
+
+        long finalIntervalMillis = intervalMillis;
+        Executors.newSingleThreadExecutor().execute(() -> {
+            db.medicineDao().insert(medicine);
+            runOnUiThread(() -> {
+                scheduleReminder(this, name, dosage, instruction, triggerMillis, finalIntervalMillis);
+                Toast.makeText(this, "Medicine saved and reminder set", Toast.LENGTH_SHORT).show();
+                finish();
             });
         });
     }
@@ -150,27 +165,6 @@ public class AddMedicineActivity extends AppCompatActivity {
         timePickerDialog.show();
     }
 
-    private boolean checkAndRequestPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.POST_NOTIFICATIONS}, PERMISSION_REQUEST_CODE);
-                return false;
-            }
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            if (!alarmManager.canScheduleExactAlarms()) {
-                Toast.makeText(this, "Please allow exact alarms in system settings", Toast.LENGTH_LONG).show();
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     @SuppressLint("ScheduleExactAlarm")
     private void scheduleReminder(Context context, String medicineName, String dosage, String instruction, long triggerTimeMillis, long intervalMillis) {
         Intent intent = new Intent(context, AlarmReceiver.class);
@@ -188,18 +182,9 @@ public class AddMedicineActivity extends AppCompatActivity {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager != null) {
             if (intervalMillis > 0) {
-                alarmManager.setRepeating(
-                        AlarmManager.RTC_WAKEUP,
-                        triggerTimeMillis,
-                        intervalMillis,
-                        pendingIntent
-                );
+                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, triggerTimeMillis, intervalMillis, pendingIntent);
             } else {
-                alarmManager.setExact(
-                        AlarmManager.RTC_WAKEUP,
-                        triggerTimeMillis,
-                        pendingIntent
-                );
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTimeMillis, pendingIntent);
             }
         }
     }
@@ -227,5 +212,5 @@ public class AddMedicineActivity extends AppCompatActivity {
 
         builder.setNegativeButton("Cancel", null);
         builder.show();
-}
+    }
 }

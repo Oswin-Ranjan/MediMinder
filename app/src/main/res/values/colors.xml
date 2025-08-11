@@ -74,4 +74,13 @@
     <color name="indigo_700">#3949AB</color>"
     <color name="indigo_800">#303F9F</color>"
     <color name="indigo_900">#283593</color>"
+    <color name="red_100">#FFEBEE</color>"
+    <color name="red_200">#FFCDD2</color>"
+    <color name="red_300">#EF9A9A</color>"
+    <color name="red_400">#E57373</color>"
+    <color name="red_500">#EF5350</color>"
+    <color name="red_600">#F44336</color>"
+    <color name="red_700">#E53935</color>"
+    <color name="red_800">#D32F2F</color>"
+    <color name="red_900">#C62828</color>"
 </resources>
